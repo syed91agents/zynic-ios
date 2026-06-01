@@ -13,68 +13,12 @@ struct PetEntry: Identifiable, Codable {
 
 struct PetManifest: Codable { var pets: [PetEntry]; var total: Int }
 
-// MARK: - Simple sprite preview using AsyncImage zoomed top-left
-struct PetSpritePreview: View {
-    let spritesheetUrl: String
-    var size: CGFloat = 88
-
-    var body: some View {
-        ZStack {
-            Color.black
-
-            if let url = URL(string: spritesheetUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let img):
-                        img
-                            .resizable()
-                            .scaledToFill()
-                            // Scale sheet so first frame fills the card
-                            // Most sheets are ~8 cols wide – scale to 8x width, show top-left
-                            .frame(width: size * 8, height: size * 8)
-                            .offset(x: size * 0.2, y: size * 0.2) // slight inset to skip padding
-                            .frame(width: size, height: size, alignment: .topLeading)
-                            .clipped()
-                    case .failure:
-                        PetInitialPlaceholder(name: "?", size: size)
-                    default:
-                        ZStack {
-                            Color.purple.opacity(0.1)
-                            ProgressView().scaleEffect(0.7).tint(.purple)
-                        }
-                    }
-                }
-                .frame(width: size, height: size)
-            } else {
-                PetInitialPlaceholder(name: "?", size: size)
-            }
-        }
-        .frame(width: size, height: size)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-}
-
-struct PetInitialPlaceholder: View {
-    let name: String
-    var size: CGFloat = 88
-    var body: some View {
-        ZStack {
-            LinearGradient(colors: [.purple.opacity(0.3), .indigo.opacity(0.2)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-            Text(String((name.isEmpty ? "?" : name).prefix(1)).uppercased())
-                .font(.system(size: size * 0.42, weight: .black))
-                .foregroundStyle(LinearGradient(colors: [.purple, .indigo],
-                                                startPoint: .top, endPoint: .bottom))
-        }
-    }
-}
-
 // MARK: - PetDenView
 struct PetDenView: View {
+    @ObservedObject var companion = CompanionStore.shared
     @State private var pets: [PetEntry] = []
     @State private var isLoading = true
     @State private var searchText = ""
-    @State private var activePet: PetEntry?
     @State private var filterKind = "All"
 
     let kinds = ["All", "creature", "character", "robot"]
@@ -95,14 +39,14 @@ struct PetDenView: View {
                 Color.black.ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Active pet banner
-                    if let pet = activePet {
-                        ActivePetBanner(pet: pet) { withAnimation { activePet = nil } }
+                    // Active companion banner
+                    if let pet = companion.activePet {
+                        ActiveCompanionBanner(pet: pet)
                             .padding(.horizontal).padding(.top, 8)
                             .transition(.move(edge: .top).combined(with: .opacity))
                     }
 
-                    // Kind filters
+                    // Filters
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(kinds, id: \.self) { k in
@@ -138,9 +82,11 @@ struct PetDenView: View {
                             LazyVGrid(columns: columns, spacing: 10) {
                                 ForEach(filtered.prefix(300)) { pet in
                                     PetCard(pet: pet,
-                                            isActive: activePet?.slug == pet.slug) {
+                                            isActive: companion.activePet?.slug == pet.slug) {
                                         withAnimation(.spring(response: 0.3)) {
-                                            activePet = activePet?.slug == pet.slug ? nil : pet
+                                            companion.setActive(
+                                                companion.activePet?.slug == pet.slug ? nil : pet
+                                            )
                                         }
                                     }
                                 }
@@ -174,7 +120,7 @@ struct PetDenView: View {
     }
 }
 
-// MARK: - Pet card
+// MARK: - Pet card (clean single idle frame)
 struct PetCard: View {
     let pet: PetEntry
     let isActive: Bool
@@ -185,22 +131,32 @@ struct PetCard: View {
         Button(action: onTap) {
             VStack(spacing: 6) {
                 ZStack(alignment: .bottomTrailing) {
-                    PetSpritePreview(spritesheetUrl: pet.spritesheetUrl, size: 90)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(
-                                    isActive ? Color.purple : Color.white.opacity(0.08),
-                                    lineWidth: isActive ? 2 : 1
-                                )
-                        )
-                        .scaleEffect(pressed ? 0.93 : 1.0)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.04))
+
+                        // Clean single frame, animates on active
+                        if isActive {
+                            AnimatedSpriteView(spritesheetUrl: pet.spritesheetUrl,
+                                               anim: .idle, size: 84, fps: 6)
+                        } else {
+                            StaticSpriteView(spritesheetUrl: pet.spritesheetUrl,
+                                             anim: .idle, frame: 0, size: 84)
+                        }
+                    }
+                    .frame(height: 92)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(isActive ? Color.purple : Color.white.opacity(0.08),
+                                    lineWidth: isActive ? 2 : 1)
+                    )
+                    .scaleEffect(pressed ? 0.93 : 1.0)
 
                     if isActive {
                         ZStack {
                             Circle().fill(Color.purple).frame(width: 22, height: 22)
                             Image(systemName: "checkmark")
-                                .font(.system(size: 11, weight: .black))
-                                .foregroundColor(.white)
+                                .font(.system(size: 11, weight: .black)).foregroundColor(.white)
                         }
                         .offset(x: 4, y: 4)
                     }
@@ -212,9 +168,7 @@ struct PetCard: View {
                     .lineLimit(1)
 
                 if let kind = pet.kind {
-                    Text(kind.capitalized)
-                        .font(.system(size: 9))
-                        .foregroundColor(.secondary)
+                    Text(kind.capitalized).font(.system(size: 9)).foregroundColor(.secondary)
                 }
             }
         }
@@ -227,31 +181,35 @@ struct PetCard: View {
     }
 }
 
-// MARK: - Active pet banner
-struct ActivePetBanner: View {
+// MARK: - Active companion banner (animated)
+struct ActiveCompanionBanner: View {
     let pet: PetEntry
-    let onRemove: () -> Void
-    @State private var bounce = false
+    @ObservedObject var companion = CompanionStore.shared
 
     var body: some View {
         HStack(spacing: 14) {
-            PetSpritePreview(spritesheetUrl: pet.spritesheetUrl, size: 56)
-                .scaleEffect(bounce ? 1.08 : 1.0)
-                .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: bounce)
-                .onAppear { bounce = true }
+            AnimatedSpriteView(spritesheetUrl: pet.spritesheetUrl,
+                               anim: .idle, size: 56, fps: 6)
+                .frame(width: 56, height: 56)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Active Companion")
-                    .font(.system(size: 10)).foregroundColor(.secondary)
-                Text(pet.displayName)
-                    .font(.system(size: 16, weight: .bold)).foregroundColor(.white)
-                Text((pet.kind ?? "unknown").capitalized)
-                    .font(.system(size: 11)).foregroundColor(.purple)
+                Text("Active Companion").font(.system(size: 10)).foregroundColor(.secondary)
+                Text(pet.displayName).font(.system(size: 16, weight: .bold)).foregroundColor(.white)
+                Text((pet.kind ?? "unknown").capitalized).font(.system(size: 11)).foregroundColor(.purple)
             }
-
             Spacer()
 
-            Button(action: onRemove) {
+            // Toggle floating visibility
+            Button {
+                companion.toggleFloating()
+            } label: {
+                Image(systemName: companion.showFloating ? "eye.fill" : "eye.slash.fill")
+                    .font(.system(size: 16)).foregroundColor(.purple)
+                    .frame(width: 36, height: 36)
+                    .background(Circle().fill(Color.purple.opacity(0.15)))
+            }
+
+            Button { withAnimation { companion.setActive(nil) } } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 22)).foregroundColor(.secondary)
             }

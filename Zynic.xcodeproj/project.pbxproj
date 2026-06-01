@@ -12,8 +12,10 @@
 		04897FA83C2C9B614697E2A8 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC70F9C25C52AB04ED24B97 /* LibraryView.swift */; };
 		25E8F5B565CFFC1D56683D3A /* AudioPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03EDC0854172C72DCFB3555C /* AudioPlayerManager.swift */; };
 		2C7CDEA691BBA837D6C7AD38 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B361920F9E1173D59A1A1990 /* HomeView.swift */; };
+		3055BCE407C7C94729089B1B /* AnimatedSprite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 205417CC1B373E9A902CA5B6 /* AnimatedSprite.swift */; };
 		3E0E8EC7FEE1A73683F41F3A /* MusicCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C08AF56D7DE921D57FA6B21 /* MusicCardView.swift */; };
 		50A50531684353890A85CA04 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C658E5E98E81234ED5B7085 /* SettingsView.swift */; };
+		50AC86D51A5A9C72D0E081C5 /* CompanionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1184D129F65431242494750 /* CompanionStore.swift */; };
 		55054A461846D266696C7F25 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9066DB4301B1DDB1C1AC3E /* ExploreView.swift */; };
 		55D478F757EAC0A617B062F2 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88ADE8E7C3A24E57118F128 /* SearchView.swift */; };
 		56B3FC5DA6237EDD23AE8958 /* ZynicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 910BC98FA3D1B4D4ED30D70B /* ZynicApp.swift */; };
@@ -36,6 +38,7 @@
 		049E421D0765D91D90AD3947 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		07EEDD697DA42BC44F5F67F1 /* BrowseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowseDetailView.swift; sourceTree = "<group>"; };
 		1C658E5E98E81234ED5B7085 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		205417CC1B373E9A902CA5B6 /* AnimatedSprite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedSprite.swift; sourceTree = "<group>"; };
 		252BC219146D19556598AD91 /* EqualizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
 		2AEDA67535512D4E02B63EC2 /* Zynic.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Zynic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F5CB21648F46F3677721879 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -48,6 +51,7 @@
 		7C08AF56D7DE921D57FA6B21 /* MusicCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicCardView.swift; sourceTree = "<group>"; };
 		8A59DCF762D2BAF4F99BA106 /* LyricsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsView.swift; sourceTree = "<group>"; };
 		910BC98FA3D1B4D4ED30D70B /* ZynicApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZynicApp.swift; sourceTree = "<group>"; };
+		A1184D129F65431242494750 /* CompanionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionStore.swift; sourceTree = "<group>"; };
 		A772232D26D2A7F9F70FCCDB /* ColorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorManager.swift; sourceTree = "<group>"; };
 		AB9066DB4301B1DDB1C1AC3E /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
 		B361920F9E1173D59A1A1990 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -70,6 +74,8 @@
 		0303A8F489D663CED9FD23FF /* Pet */ = {
 			isa = PBXGroup;
 			children = (
+				205417CC1B373E9A902CA5B6 /* AnimatedSprite.swift */,
+				A1184D129F65431242494750 /* CompanionStore.swift */,
 				E54932C1AA9DBA448D25A4A9 /* PetDenView.swift */,
 			);
 			path = Pet;
@@ -298,10 +304,12 @@
 			files = (
 				944476492F07793AD7EB4EF4 /* APIClient.swift in Sources */,
 				D54D650DCA2274C3FDC806A7 /* AnimatedBackground.swift in Sources */,
+				3055BCE407C7C94729089B1B /* AnimatedSprite.swift in Sources */,
 				25E8F5B565CFFC1D56683D3A /* AudioPlayerManager.swift in Sources */,
 				D88E9E011FB0C796B1F68AD4 /* BrowseDetailView.swift in Sources */,
 				F2C8D778E858085F6EA76EEB /* ChartsView.swift in Sources */,
 				9E9558E20E68D883D7B7AA53 /* ColorManager.swift in Sources */,
+				50AC86D51A5A9C72D0E081C5 /* CompanionStore.swift in Sources */,
 				F2414FB9A3DFE99A02486F11 /* ContentView.swift in Sources */,
 				BBDA3EE6A6059B6B0B50752C /* EqualizerView.swift in Sources */,
 				55054A461846D266696C7F25 /* ExploreView.swift in Sources */,

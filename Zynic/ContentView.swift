@@ -37,6 +37,8 @@ struct ContentView: View {
                     ))
             }
         }
+        // Floating draggable companion pet — appears across all screens
+        .overlay(FloatingCompanion())
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: player.currentTrack != nil)
         .sheet(isPresented: $showFullPlayer) {
             FullPlayerView(isPresented: $showFullPlayer)

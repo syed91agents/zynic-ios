@@ -4,118 +4,103 @@ struct BrowseDetailView: View {
     let browseId: String
     @ObservedObject var player  = AudioPlayerManager.shared
     @ObservedObject var library = LibraryStore.shared
-    @ObservedObject var colors  = ColorManager.shared
     @State private var detail: BrowseDetail?
     @State private var isLoading = true
 
     var body: some View {
         ZStack {
-            // Dynamic background from album art
-            ZStack {
-                Color.black
-                if let thumb = detail?.thumbnail, let url = URL(string: thumb) {
-                    AsyncImage(url: url) { img in
-                        img.resizable().scaledToFill()
-                            .blur(radius: 60).opacity(0.35).saturation(1.5)
-                    } placeholder: { Color.clear }
-                    LinearGradient(colors: [colors.accent.opacity(0.15), .black.opacity(0.9)],
-                                   startPoint: .top, endPoint: .bottom)
-                }
-            }
-            .ignoresSafeArea()
+            Color.black.ignoresSafeArea()
 
             if isLoading {
-                VStack(spacing: 16) {
-                    ZStack {
-                        Circle().fill(colors.gradient).frame(width: 56, height: 56)
-                            .shadow(color: colors.glowColor, radius: 12)
-                        ProgressView().tint(.white)
-                    }
-                    Text("Loading…").foregroundColor(.secondary).font(.system(size: 13))
-                }
+                ProgressView().tint(.purple).scaleEffect(1.4)
             } else if let d = detail {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        // ── Header ──────────────────────────────────
-                        ZStack(alignment: .bottom) {
-                            AsyncImage(url: d.thumbnailURL) { img in
-                                img.resizable().scaledToFill()
-                            } placeholder: { colors.gradient }
-                            .frame(maxWidth: .infinity).frame(height: 300).clipped()
+                    VStack(spacing: 0) {
 
-                            LinearGradient(colors: [.clear, .black],
-                                           startPoint: .top, endPoint: .bottom)
-                            .frame(height: 200)
-
-                            VStack(alignment: .leading, spacing: 6) {
-                                if let title = d.title {
-                                    Text(title)
-                                        .font(.system(size: 26, weight: .black))
-                                        .foregroundColor(.white)
-                                }
-                                if let sub = d.subtitle {
-                                    Text(sub).font(.system(size: 13)).foregroundColor(.secondary)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
+                        // ── Centered square artwork (matches Android) ──
+                        AsyncImage(url: d.thumbnailURL) { img in
+                            img.resizable().scaledToFit()
+                        } placeholder: {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(LinearGradient(colors: [.purple.opacity(0.4), .indigo.opacity(0.3)],
+                                                     startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .overlay(Image(systemName: "music.note.list")
+                                    .font(.system(size: 50)).foregroundColor(.white.opacity(0.4)))
                         }
+                        .frame(width: 220, height: 220)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: .black.opacity(0.5), radius: 20, y: 10)
+                        .padding(.top, 20)
+                        .padding(.bottom, 20)
 
-                        // ── Actions ──────────────────────────────────
+                        // ── Title + subtitle (centered) ─────────────
+                        VStack(spacing: 6) {
+                            if let title = d.title {
+                                Text(title)
+                                    .font(.system(size: 24, weight: .black))
+                                    .foregroundColor(.white)
+                                    .multilineTextAlignment(.center)
+                                    .lineLimit(2)
+                            }
+                            if let sub = d.subtitle {
+                                Text(sub)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .lineLimit(2)
+                            }
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 20)
+
+                        // ── Play / Shuffle ──────────────────────────
                         if let tracks = d.tracks, !tracks.isEmpty {
                             HStack(spacing: 12) {
                                 Button {
-                                    let playable = tracks.filter { ($0.videoId != nil && !($0.videoId ?? "").isEmpty) || $0.id.count == 11 }
-                                    player.play(tracks: playable.isEmpty ? tracks : playable, startAt: 0)
+                                    player.play(tracks: playableTracks(tracks), startAt: 0)
                                 } label: {
                                     Label("Play All", systemImage: "play.fill")
                                         .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 13)
-                                        .background(colors.gradient)
+                                        .padding(.vertical, 12)
+                                        .background(Color.purple)
                                         .foregroundColor(.white)
-                                        .font(.system(size: 15, weight: .bold))
-                                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                                        .shadow(color: colors.glowColor, radius: 8)
+                                        .font(.system(size: 14, weight: .bold))
+                                        .clipShape(Capsule())
                                 }
-
                                 Button {
-                                    let playable = tracks.filter { ($0.videoId != nil && !($0.videoId ?? "").isEmpty) || $0.id.count == 11 }
                                     player.isShuffled = true
-                                    player.play(tracks: (playable.isEmpty ? tracks : playable).shuffled(), startAt: 0)
+                                    player.play(tracks: playableTracks(tracks).shuffled(), startAt: 0)
                                 } label: {
                                     Label("Shuffle", systemImage: "shuffle")
                                         .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 13)
-                                        .glassCard(cornerRadius: 14)
+                                        .padding(.vertical, 12)
+                                        .background(Color.white.opacity(0.1))
                                         .foregroundColor(.white)
-                                        .font(.system(size: 15, weight: .bold))
+                                        .font(.system(size: 14, weight: .bold))
+                                        .clipShape(Capsule())
                                 }
                             }
-                            .padding()
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 16)
 
-                            // ── Track list ─────────────────────────────
+                            // ── Track list ─────────────────────────
                             LazyVStack(spacing: 0) {
                                 ForEach(Array(tracks.enumerated()), id: \.element.id) { idx, t in
-                                    TrackRowView(track: t, index: idx + 1) {
-                                        let playable = tracks.filter { ($0.videoId != nil && !($0.videoId ?? "").isEmpty) || $0.id.count == 11 }
-                                        let pi = playable.firstIndex { $0.id == t.id } ?? idx
-                                        if !playable.isEmpty { player.play(tracks: playable, startAt: pi) }
-                                    }
-                                    .padding(.horizontal)
+                                    trackRow(t, idx)
                                     if idx < tracks.count - 1 {
                                         Divider()
                                             .background(Color.white.opacity(0.06))
-                                            .padding(.leading, 74)
+                                            .padding(.leading, 72)
                                     }
                                 }
                             }
                         }
 
-                        // ── Related sections ────────────────────────
+                        // ── Related sections ───────────────────────
                         if let sections = d.sections {
                             ForEach(sections) { section in
                                 ShelfView(shelf: section) { track, tracks in
-                                    let playable = tracks.filter { ($0.videoId != nil && !($0.videoId ?? "").isEmpty) || $0.id.count == 11 }
+                                    let playable = playableTracks(tracks)
                                     if let idx = playable.firstIndex(where: { $0.id == track.id }) {
                                         player.play(tracks: playable, startAt: idx)
                                     }
@@ -127,35 +112,67 @@ struct BrowseDetailView: View {
                         Spacer(minLength: 120)
                     }
                 }
+            } else {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.circle")
+                        .font(.system(size: 40)).foregroundColor(.secondary)
+                    Text("Could not load").foregroundColor(.secondary)
+                }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.clear, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                if let t = detail?.tracks?.first {
-                    Button {
-                        library.contains(t) ? library.remove(t) : library.add(t)
-                    } label: {
-                        Image(systemName: library.contains(t) ? "heart.fill" : "heart")
-                            .foregroundColor(library.contains(t) ? .pink : .white)
-                    }
-                }
+        .task { await load() }
+    }
+
+    @ViewBuilder
+    private func trackRow(_ t: Track, _ idx: Int) -> some View {
+        HStack(spacing: 12) {
+            Text("\(idx + 1)")
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+                .frame(width: 22, alignment: .center)
+
+            AsyncImage(url: t.thumbnailURL) { img in
+                img.resizable().scaledToFill()
+            } placeholder: { Color.purple.opacity(0.3) }
+            .frame(width: 44, height: 44)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(t.title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(player.currentTrack?.id == t.id ? .purple : .white)
+                    .lineLimit(1)
+                Text(t.displayArtist)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            // Find the tracks list this row belongs to
+            if let tracks = detail?.tracks {
+                let playable = playableTracks(tracks)
+                let pi = playable.firstIndex { $0.id == t.id } ?? 0
+                if !playable.isEmpty { player.play(tracks: playable, startAt: pi) }
             }
         }
-        .task { await load() }
+    }
+
+    private func playableTracks(_ tracks: [Track]) -> [Track] {
+        let p = tracks.filter { ($0.videoId != nil && !($0.videoId ?? "").isEmpty) || $0.id.count == 11 }
+        return p.isEmpty ? tracks : p
     }
 
     private func load() async {
         isLoading = true
-        do {
-            detail = try await APIClient.shared.browse(browseId)
-            // Extract color from album art
-            if let thumb = detail?.thumbnail {
-                colors.updateFromURL(thumb)
-            }
-        } catch {}
+        do { detail = try await APIClient.shared.browse(browseId) } catch {}
         isLoading = false
     }
 }
