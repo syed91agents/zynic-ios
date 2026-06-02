@@ -90,15 +90,6 @@ struct SettingsView: View {
                             Text("1.0.0").foregroundColor(.secondary)
                         }
                         .listRowBackground(Color.white.opacity(0.05))
-
-                        HStack {
-                            Label("Server", systemImage: "server.rack")
-                            Spacer()
-                            Text(BASE_URL.replacingOccurrences(of: "https://", with: "").prefix(30) + "")
-                                .foregroundColor(.secondary)
-                                .font(.system(size: 12))
-                        }
-                        .listRowBackground(Color.white.opacity(0.05))
                     } header: {
                         Text("About").foregroundColor(.secondary)
                     }
